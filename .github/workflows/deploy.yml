@@ -78,7 +78,7 @@ jobs:
         run: |
           kubectl get namespace squad-9 || kubectl create namespace squad-9
 
-      - name: Deploy Microservice 1 using values.yaml (No Chart.yaml)
+      - name: Deploy Microservice 1 using values.yaml
         run: |
           helm upgrade --install appointment ./appointment/helm \
             --namespace squad-9 \
@@ -86,7 +86,7 @@ jobs:
             --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment \
             --set image.tag=latest
 
-      - name: Deploy Microservice 2 using values.yaml (No Chart.yaml)
+      - name: Deploy Microservice 2 using values.yaml
         run: |
           helm upgrade --install patient ./patient/helm \
             --namespace squad-9 \
