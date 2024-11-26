@@ -37,13 +37,13 @@ jobs:
         aws_region: 'us-east-1'  
 
     - name: Initialize Terraform
-      run: terraform init
+      run: terraform init ./terraform-eks-project/
 
     - name: Terraform Plan
-      run: terraform plan -out=tfplan
+      run: terraform plan -out=tfplan ./terraform-eks-project/
 
     - name: Terraform Apply
       if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-      run: terraform apply -auto-approve tfplan
+      run: terraform apply -auto-approve tfplan ./terraform-eks-project/
 
       
