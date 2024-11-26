@@ -1,0 +1,9 @@
+replicaCount: 1
+
+image:
+  repository: <AWS_ACCOUNT_ID>.dkr.ecr.<AWS_REGION>.amazonaws.com/microservice1
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 3000
