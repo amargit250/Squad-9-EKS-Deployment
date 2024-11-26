@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - dev
+  pull_request:
+    branches:
+      - dev
 
 jobs:
   terraform:
@@ -59,4 +62,11 @@ jobs:
     - name: Terraform Apply
       if: env.apply == 'true' && github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
+      working-directory: terraform-eks-project
+
+    - name: Terraform Destroy (Optional - Trigger manually)
+      if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev'
+      run: |
+        echo "Destroying AWS resources..."
+        terraform destroy -auto-approve
       working-directory: terraform-eks-project
