@@ -1,6 +1,7 @@
 name: Terraform Infrastructure
 
 on:
+  workflow_dispatch: # Allow manual triggers
   push:
     branches:
       - dev
@@ -45,6 +46,13 @@ jobs:
       working-directory: terraform-eks-project
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
+      working-directory: terraform-eks-project
+
+    - name: Terraform Destroy
+      if: always() # Always run this step regardless of apply success/failure
+      run: |
+        terraform plan -destroy -out=tfplan-destroy
+        terraform apply -auto-approve tfplan-destroy
       working-directory: terraform-eks-project
