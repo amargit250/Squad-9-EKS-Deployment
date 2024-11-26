@@ -78,12 +78,26 @@ jobs:
         run: |
           kubectl get namespace squad-9 || kubectl create namespace squad-9
 
+      - name: Validate Helm Chart for Microservice 1
+        run: |
+          if [ ! -f "./appointment/helm/Chart.yaml" ]; then
+            echo "Error: Chart.yaml file is missing in ./appointment/helm"
+            exit 1
+          fi
+
       - name: Deploy Microservice 1 using Helm
         run: |
           helm upgrade --install appointment ./appointment/helm \
             --namespace squad-9 \
             --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment \
             --set image.tag=latest
+
+      - name: Validate Helm Chart for Microservice 2
+        run: |
+          if [ ! -f "./patient/helm/Chart.yaml" ]; then
+            echo "Error: Chart.yaml file is missing in ./patient/helm"
+            exit 1
+          fi
 
       - name: Deploy Microservice 2 using Helm
         run: |
