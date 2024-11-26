@@ -1,0 +1,4 @@
+apiVersion: v2
+name: patient
+description: A Node.js based microservice
+version: 0.1.0
