@@ -49,12 +49,14 @@ jobs:
     - name: Check for changes in Terraform Plan
       id: check_changes
       run: |
-        if ! terraform show -no-color tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
-          echo "Changes detected, applying..."
-          echo "apply=true" >> $GITHUB_ENV
-        else
+        # Check if there are changes in the plan
+        if terraform show -no-color tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
           echo "No changes detected, skipping apply."
           echo "apply=false" >> $GITHUB_ENV
+        else
+          echo "Changes detected, applying..."
+          echo "apply=true" >> $GITHUB_ENV
+        fi
       working-directory: terraform-eks-project
 
     - name: Terraform Apply
