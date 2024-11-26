@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-  workflow_dispatch:
+  workflow_dispatch: 
 
 env:
   AWS_REGION: us-east-1
@@ -74,14 +74,20 @@ jobs:
         run: |
           aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
 
+      - name: Create Namespace squad-9
+        run: |
+          kubectl get namespace squad-9 || kubectl create namespace squad-9
+
       - name: Deploy Microservice 1 using Helm
         run: |
           helm upgrade --install microservice1 ./appointment/helm \
+            --namespace squad-9 \
             --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment \
             --set image.tag=latest
 
       - name: Deploy Microservice 2 using Helm
         run: |
           helm upgrade --install microservice2 ./patient/helm \
+            --namespace squad-9 \
             --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/patient \
             --set image.tag=latest
