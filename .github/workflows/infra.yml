@@ -29,6 +29,7 @@ jobs:
         key: terraform-provider-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
         restore-keys: |
           terraform-provider-${{ runner.os }}-
+
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -40,18 +41,57 @@ jobs:
       run: terraform init
       working-directory: terraform-eks-project
 
+    - name: Check if EKS Cluster Exists
+      id: check_cluster
+      run: |
+        CLUSTER_EXISTS=$(aws eks describe-cluster --name terraform-eks-cluster --query "cluster.name" --output text || echo "not found")
+        if [[ "$CLUSTER_EXISTS" != "not found" ]]; then
+          echo "EKS cluster already exists, skipping apply."
+          echo "apply=false" >> $GITHUB_ENV
+        else
+          echo "EKS cluster does not exist, proceeding with apply."
+          echo "apply=true" >> $GITHUB_ENV
+        fi
+
     - name: Terraform Plan
+      id: plan
       run: terraform plan -out=tfplan
       working-directory: terraform-eks-project
+      if: env.apply == 'true'  # Only run plan if resources are not present
+
+    - name: Check for changes in Terraform Plan
+      id: check_changes
+      run: |
+        if terraform show -no-color tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+          echo "No changes detected, skipping apply."
+          echo "apply=false" >> $GITHUB_ENV
+        else
+          echo "Changes detected, applying..."
+          echo "apply=true" >> $GITHUB_ENV
+        fi
+      working-directory: terraform-eks-project
+      if: env.apply == 'true'
 
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+      if: env.apply == 'true' && github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
       working-directory: terraform-eks-project
 
-    - name: Terraform Destroy
-      if: always() # Always run this step regardless of apply success/failure
+    - name: Check if EKS Cluster Exists for Destroy
+      id: check_cluster_for_destroy
       run: |
-        terraform plan -destroy -out=tfplan-destroy
-        terraform apply -auto-approve tfplan-destroy
+        CLUSTER_EXISTS=$(aws eks describe-cluster --name terraform-eks-cluster --query "cluster.name" --output text || echo "not found")
+        if [[ "$CLUSTER_EXISTS" == "not found" ]]; then
+          echo "EKS cluster does not exist, skipping destroy."
+          echo "destroy=false" >> $GITHUB_ENV
+        else
+          echo "EKS cluster exists, proceeding with destroy."
+          echo "destroy=true" >> $GITHUB_ENV
+        fi
+
+    - name: Terraform Destroy (Optional - Trigger manually)
+      if: github.event_name == 'workflow_dispatch' && env.destroy == 'true'
+      run: |
+        echo "Destroying AWS resources..."
+        terraform destroy -auto-approve
       working-directory: terraform-eks-project
