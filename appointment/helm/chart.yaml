@@ -1,4 +1,4 @@
 apiVersion: v2
-name: microservice1
+name: appointment
 description: A Node.js based microservice
 version: 0.1.0
