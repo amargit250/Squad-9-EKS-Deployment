@@ -6,7 +6,7 @@ FROM node:16-alpine
 WORKDIR /usr/src/app
 
 # Copy package.json 
-COPY appointment.json ./
+COPY package.json ./
 
 # Install the dependencies
 RUN npm install
