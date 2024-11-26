@@ -49,10 +49,3 @@ jobs:
       if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
       working-directory: terraform-eks-project
-
-    - name: Terraform Destroy
-      if: always() # Always run this step regardless of apply success/failure
-      run: |
-        terraform plan -destroy -out=tfplan-destroy
-        terraform apply -auto-approve tfplan-destroy
-      working-directory: terraform-eks-project
