@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - dev
-  workflow_dispatch: 
+  workflow_dispatch:
 
 env:
   AWS_REGION: us-east-1
@@ -51,37 +51,24 @@ jobs:
           docker build -t $IMAGE_URI ./patient
           docker push $IMAGE_URI
 
- deploy:
-  runs-on: ubuntu-latest
-  needs: build-and-push
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
 
-  steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - name: Set up AWS Credentials
-      uses: aws-actions/configure-aws-credentials@v3
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: ${{ env.AWS_REGION }}
+      - name: Set up AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v3
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
 
-    - name: Retrieve AWS Account ID
-      id: aws-account
-      run: echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
+      - name: Retrieve AWS Account ID
+        id: aws-account
+        run: echo "AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)" >> $GITHUB_ENV
 
-    - name: Update kubeconfig
-      run: |
-        aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name ${{ env.EKS_CLUSTER_NAME }}
-
-    - name: Deploy Microservice 1 using Helm
-      run: |
-        helm upgrade --install microservice1 ./appointment/helm \
-          --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment \
-          --set image.tag=latest
-
-    - name: Deploy Microservice 2 using Helm
-      run: |
-        helm upgrade --install microservice2 ./patient/helm \
-          --set image.repository=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/patient \
-          --set image.tag=latest
+      - name: Update kubeconfig
+        run: |
