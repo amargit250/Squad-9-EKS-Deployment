@@ -32,6 +32,13 @@ jobs:
       - name: Log in to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v1
 
+      - name: Ensure ECR Repositories Exist
+        run: |
+          for repo in "appointment" "patient"; do
+            aws ecr describe-repositories --repository-names $repo || \
+            aws ecr create-repository --repository-name $repo
+          done
+
       - name: Build and Push Docker Image for appointment
         run: |
           IMAGE_URI=${{ env.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com/appointment:latest
