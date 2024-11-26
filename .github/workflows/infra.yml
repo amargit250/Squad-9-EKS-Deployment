@@ -42,10 +42,22 @@ jobs:
       working-directory: terraform-eks-project
 
     - name: Terraform Plan
+      id: plan
       run: terraform plan -out=tfplan
       working-directory: terraform-eks-project
 
+    - name: Check for changes in Terraform Plan
+      id: check_changes
+      run: |
+        if ! terraform show -no-color tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
+          echo "Changes detected, applying..."
+          echo "apply=true" >> $GITHUB_ENV
+        else
+          echo "No changes detected, skipping apply."
+          echo "apply=false" >> $GITHUB_ENV
+      working-directory: terraform-eks-project
+
     - name: Terraform Apply
-      if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
+      if: env.apply == 'true' && github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
       working-directory: terraform-eks-project
