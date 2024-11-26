@@ -29,7 +29,6 @@ jobs:
         key: terraform-provider-${{ runner.os }}-${{ hashFiles('**/*.tf') }}
         restore-keys: |
           terraform-provider-${{ runner.os }}-
-
     - name: Configure AWS credentials
       uses: aws-actions/configure-aws-credentials@v1
       with:
@@ -42,31 +41,17 @@ jobs:
       working-directory: terraform-eks-project
 
     - name: Terraform Plan
-      id: plan
       run: terraform plan -out=tfplan
       working-directory: terraform-eks-project
 
-    - name: Check for changes in Terraform Plan
-      id: check_changes
-      run: |
-        # Check if there are changes in the plan
-        if terraform show -no-color tfplan | grep -q 'No changes. Infrastructure is up-to-date.'; then
-          echo "No changes detected, skipping apply."
-          echo "apply=false" >> $GITHUB_ENV
-        else
-          echo "Changes detected, applying..."
-          echo "apply=true" >> $GITHUB_ENV
-        fi
-      working-directory: terraform-eks-project
-
     - name: Terraform Apply
-      if: env.apply == 'true' && github.ref == 'refs/heads/dev' && github.event_name == 'push'
+      if: github.ref == 'refs/heads/dev' && github.event_name == 'push'
       run: terraform apply -auto-approve tfplan
       working-directory: terraform-eks-project
 
-    - name: Terraform Destroy (Optional - Trigger manually)
-      if: github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/dev'
+    - name: Terraform Destroy
+      if: always() # Always run this step regardless of apply success/failure
       run: |
-        echo "Destroying AWS resources..."
-        terraform destroy -auto-approve
+        terraform plan -destroy -out=tfplan-destroy
+        terraform apply -auto-approve tfplan-destroy
       working-directory: terraform-eks-project
